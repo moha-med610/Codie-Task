@@ -20,10 +20,6 @@ const getAllCourses = asyncWrapper(async (req, res, next) => {
 const getSingleCourse = asyncWrapper(async (req, res, next) => {
   const { id } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(AppError.error(400, "Bad Request", "Invalid Course Id"));
-  }
-
   const course = await Courses.findById(id);
 
   if (!course) {
@@ -44,20 +40,18 @@ const getSingleCourse = asyncWrapper(async (req, res, next) => {
 const createCourse = asyncWrapper(async (req, res, next) => {
   const { title, description, price, image, startDate, endDate } = req.body;
 
-  if (!title || !description || !price) {
-    return next(
-      AppError.error(400, "Bad Request", "Please Provide All Required Fields")
-    );
-  }
-
-  const result = await uploadImage(req.file.buffer);
+  let imageUrl = image;
+    if (req.file && req.file.buffer) {
+      const result = await uploadImage(req.file.buffer);
+      imageUrl = result.secure_url;
+    }
 
 
   const newCourse = await Courses.create({
     title,
     description,
     price,
-    image: result.secure_url,
+    image: imageUrl,
     startDate,
     endDate,
   });
@@ -74,16 +68,6 @@ const createCourse = asyncWrapper(async (req, res, next) => {
 const editCourseById = asyncWrapper(async (req, res, next) => {
     const { id } = req.params;
     const { title, description, price, image, startDate, endDate } = req.body;
-  
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return next(AppError.error(400, "Bad Request", "Invalid Course Id"));
-    }
-  
-    if (!title || !description || !price) {
-      return next(
-        AppError.error(400, "Bad Request", "Please Provide All Required Fields")
-      );
-    }
   
     let imageUrl = image;
     if (req.file && req.file.buffer) {
@@ -113,10 +97,6 @@ const editCourseById = asyncWrapper(async (req, res, next) => {
 
 const deleteCourseById = asyncWrapper(async (req, res, next) => {
   const { id } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(AppError.error(400, "Bad Request", "Invalid Course Id"));
-  }
 
   const course = await Course.findByIdAndDelete(id)
 
